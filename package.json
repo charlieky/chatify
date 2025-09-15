@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/charlieky/chatify/issues"
   },
-  "homepage": "https://github.com/charlieky/chatify#readme"
+  "homepage": "https://github.com/charlieky/chatify#readme",
+  "dependencies": {
+    "crypto-browserify": "^3.12.1"
+  }
 }
