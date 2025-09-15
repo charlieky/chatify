@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../lib/utils.js";
 import { sendWelcomeEmail } from "../emails/emailHandlers.js";
 import { ENV } from "../lib/env.js";
+
+
 export const signup = async (req, res) => {
     const {fullName, email, password} = req.body;
 
@@ -73,7 +75,7 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
+   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
 
@@ -98,6 +100,7 @@ export const login = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+   
 
 export const logout = (_, res) => {
   res.cookie("jwt", "", { maxAge: 0 });
