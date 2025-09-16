@@ -1,12 +1,12 @@
+import { sendWelcomeEmail } from "../emails/emailHandlers.js";
+import { generateToken } from "../lib/utils.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
-import { generateToken } from "../lib/utils.js";
-import { sendWelcomeEmail } from "../emails/emailHandlers.js";
 import { ENV } from "../lib/env.js";
 import cloudinary from "../lib/cloudinary.js";
 
 export const signup = async (req, res) => {
-    const {fullName, email, password} = req.body;
+  const { fullName, email, password } = req.body;
 
   try {
     if (!fullName || !email || !password) {
@@ -26,56 +26,51 @@ export const signup = async (req, res) => {
     const user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "Email already exists" });
 
+    // 123456 => $dnjasdkasj_?dmsakmk
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-   // 123456 => $dnjasdkasj_?dmsakmk
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-  
-        const newUser = new User({
-            fullName,
-            email,
-            password: hashedPassword,
-        });
+    const newUser = new User({
+      fullName,
+      email,
+      password: hashedPassword,
+    });
 
-        if (newUser) {
+    if (newUser) {
+      // before CR:
+      // generateToken(newUser._id, res);
+      // await newUser.save();
 
-          //  before CR:    
-          //  generateToken(newUser._id, res);
-          //  await newUser.save();
+      // after CR:
+      // Persist user first, then issue auth cookie
+      const savedUser = await newUser.save();
+      generateToken(savedUser._id, res);
 
-          // after CR:
-          // Persist user first, then issue auth cookie
-          const saveUser = await newUser.save();
-          generateToken(saveUser._id, res);
+      res.status(201).json({
+        _id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        profilePic: newUser.profilePic,
+      });
 
-            res.status(201).json({
-                _id: newUser._id,
-                fullName: newUser.fullName,
-                email: newUser.email,
-                profilePic: newUser.profilePic,
-            });
-
-            try {
-              await sendWelcomeEmail(saveUser.email, saveUser.fullName, ENV.CLIENT_URL);
-            } catch (error) {
-              console.error("Failed to send welcome email:", error);
-            }
-
-        } else {
-            res.status(400).json({message: "Invalid user data" });
-        }
-
-    } catch (error) {
-        console.log("Error in signup controller:", error);
-        res.status(500).json({message: "Internal Server error" });
+      try {
+        await sendWelcomeEmail(savedUser.email, savedUser.fullName, ENV.CLIENT_URL);
+      } catch (error) {
+        console.error("Failed to send welcome email:", error);
+      }
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
     }
-
+  } catch (error) {
+    console.log("Error in signup controller:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-   if (!email || !password) {
+  if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
 
@@ -100,7 +95,6 @@ export const login = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-   
 
 export const logout = (_, res) => {
   res.cookie("jwt", "", { maxAge: 0 });
