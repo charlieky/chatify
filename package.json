@@ -22,6 +22,8 @@
   },
   "homepage": "https://github.com/charlieky/chatify#readme",
   "dependencies": {
+    "@arcjet/inspect": "^1.0.0-beta.10",
+    "@arcjet/node": "^1.0.0-beta.10",
     "crypto-browserify": "^3.12.1"
   }
 }
